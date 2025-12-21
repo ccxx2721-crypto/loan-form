@@ -89,26 +89,18 @@ document.getElementById('btn').onclick = async () => {
     document.getElementById('q').innerText = '送出中…';
     document.getElementById('btn').disabled = true;
 
-    const res = await fetch(API_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
-    });
+    try {
+  const res = await fetch(API_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  });
 
-    const r = await res.json();
-    if (!r.success) {
-      alert('送出失敗，請稍後再試');
-      document.getElementById('btn').disabled = false;
-      return;
-    }
+  const text = await res.text();   // ✅ 改這行
+  alert('送出成功');
+  liff.closeWindow();
 
-    alert('申請完成');
-    liff.closeWindow();
-  }
-};
-
-init();
-</script>
-
-</body>
-</html>
+} catch (err) {
+  alert('送出失敗：' + err.message);
+  document.getElementById('btn').disabled = false;
+}
