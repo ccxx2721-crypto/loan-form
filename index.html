@@ -1,14 +1,24 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta charset="utf-8">
-<title>貸款申請</title>
-<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-<style>
-body { font-family: Arial; padding: 20px; }
-input, button { width:100%; padding:12px; font-size:18px; margin-top:12px; }
-button { background:#06c755; color:#fff; border:none; border-radius:6px; }
-</style>
+  <meta charset="utf-8">
+  <title>貸款申請</title>
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <style>
+    body { font-family: Arial; padding: 20px; }
+    input, button {
+      width: 100%;
+      padding: 12px;
+      font-size: 18px;
+      margin-top: 12px;
+    }
+    button {
+      background: #06c755;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+    }
+  </style>
 </head>
 <body>
 
@@ -17,12 +27,11 @@ button { background:#06c755; color:#fff; border:none; border-radius:6px; }
 <button id="btn">下一步</button>
 
 <script>
-const LIFF_ID = '2008741675-rwpbbLaf';
-const API_URL = 'https://script.google.com/macros/s/AKfycbxOiN6mR471Fj3G4RYZbwnYvCB4k2NQJJC7u1Q6PeMGoXNtnS5S5OtjAJpR087AynHO/exec';
+const LIFF_ID = '2008741675-rwpbbLaf'; // ✅ 你的最新 LIFF ID
 
 const steps = [
   { key:'name', text:'請輸入姓名' },
-  { key:'phone', text:'請輸入手機' },
+  { key:'phone', text:'請輸入手機號碼' },
   { key:'birthday', text:'請輸入生日' },
   { key:'requestAmount', text:'請輸入申請額度' },
   { key:'purpose', text:'請輸入資金用途' }
@@ -51,10 +60,10 @@ function show() {
 }
 
 document.getElementById('btn').onclick = async () => {
-  const v = document.getElementById('a').value;
-  if (!v) return alert('請填寫');
+  const val = document.getElementById('a').value;
+  if (!val) return alert('請填寫');
 
-  data[steps[i].key] = v;
+  data[steps[i].key] = val;
   i++;
 
   if (i < steps.length) {
@@ -62,24 +71,18 @@ document.getElementById('btn').onclick = async () => {
     return;
   }
 
-  document.getElementById('q').innerText = '送出中…';
-  document.getElementById('btn').disabled = true;
+  const msg =
+`【貸款申請】
+姓名：${data.name}
+手機：${data.phone}
+生日：${data.birthday}
+額度：${data.requestAmount}
+用途：${data.purpose}
+userId：${data.userId}`;
 
-  const res = await fetch(API_URL, {
-    method: 'POST',
-    headers: { 'Content-Type':'application/json' },
-    body: JSON.stringify(data)
-  });
+  await liff.sendMessages([{ type:'text', text: msg }]);
 
-  const r = await res.json();
-
-  if (!r.success) {
-    alert('送出失敗，請稍後再試');
-    document.getElementById('btn').disabled = false;
-    return;
-  }
-
-  alert('申請完成');
+  alert('申請已送出');
   liff.closeWindow();
 };
 
