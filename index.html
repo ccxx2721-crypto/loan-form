@@ -6,32 +6,43 @@
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <style>
     body { font-family: Arial; padding: 20px; }
-    input, button { width: 100%; font-size: 18px; padding: 10px; margin-top: 10px; }
-    button { background: #06c755; color: #fff; border: none; border-radius: 5px; }
+    input, button {
+      width: 100%;
+      padding: 12px;
+      font-size: 18px;
+      margin-top: 12px;
+    }
+    button {
+      background: #06c755;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+    }
   </style>
 </head>
 <body>
 
 <h3 id="q">載入中…</h3>
 <input id="a" placeholder="">
-<button id="btn" onclick="next()">下一步</button>
+<button id="btn">下一步</button>
 
 <script>
+/* 🔴 必填 */
 const LIFF_ID = '2008741675-rwpbbLaf';
-const API_URL = 'https://script.google.com/macros/s/AKfycbxZwyeJIFUIT0GpuZfTf12fuTFyyxmGIwd4R_izqyuLTfPBTGp77ZsazV5GetYlWps/exec';
 
+/* 表單流程 */
 const steps = [
-  { key: 'name', text: '請輸入姓名' },
-  { key: 'phone', text: '請輸入手機號碼' },
-  { key: 'requestAmount', text: '請輸入申請額度' }
+  { key:'name', text:'請輸入姓名' },
+  { key:'phone', text:'請輸入手機號碼' },
+  { key:'birthday', text:'請輸入生日' },
+  { key:'requestAmount', text:'請輸入申請額度' },
+  { key:'purpose', text:'請輸入資金用途' }
 ];
 
 let i = 0;
 let data = {};
 
 async function init() {
-  document.getElementById('q').innerText = 'LIFF 初始化中…';
-
   await liff.init({ liffId: LIFF_ID });
 
   if (!liff.isLoggedIn()) {
@@ -39,8 +50,8 @@ async function init() {
     return;
   }
 
-  const profile = await liff.getProfile();
-  data.userId = profile.userId;
+  const p = await liff.getProfile();
+  data.userId = p.userId;
 
   show();
 }
@@ -51,34 +62,39 @@ function show() {
   document.getElementById('a').placeholder = steps[i].text;
 }
 
-async function next() {
-  data[steps[i].key] = document.getElementById('a').value;
+document.getElementById('btn').onclick = async () => {
+  const input = document.getElementById('a');
+  if (!input.value) {
+    alert('請填寫後再繼續');
+    return;
+  }
+
+  data[steps[i].key] = input.value;
   i++;
 
   if (i < steps.length) {
     show();
-  } else {
-    document.getElementById('q').innerText = '送出中…';
-    document.getElementById('btn').disabled = true;
-
-    const res = await fetch(API_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
-    });
-
-    const r = await res.json();
-
-    if (!r.success) {
-      alert('送出失敗，請稍後再試');
-      document.getElementById('btn').disabled = false;
-      return;
-    }
-
-    alert('申請完成');
-    liff.closeWindow();
+    return;
   }
-}
+
+  // ✅ 改成送 LINE 訊息（不再 fetch）
+  const message =
+`【貸款申請】
+姓名：${data.name}
+手機：${data.phone}
+生日：${data.birthday}
+申請額度：${data.requestAmount}
+用途：${data.purpose}
+userId：${data.userId}`;
+
+  await liff.sendMessages([{
+    type: 'text',
+    text: message
+  }]);
+
+  alert('申請已送出');
+  liff.closeWindow();
+};
 
 init();
 </script>
