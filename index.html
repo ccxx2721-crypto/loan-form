@@ -1,41 +1,28 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="utf-8">
-  <title>貸款申請</title>
-  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-  <style>
-    body { font-family: Arial; padding: 20px; }
-    input, button {
-      width: 100%;
-      padding: 12px;
-      font-size: 18px;
-      margin-top: 12px;
-    }
-    button {
-      background: #06c755;
-      color: #fff;
-      border: none;
-      border-radius: 6px;
-    }
-  </style>
+<meta charset="utf-8">
+<title>貸款申請</title>
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<style>
+body { font-family: Arial; padding: 20px; }
+input, button { width:100%; padding:12px; font-size:18px; margin-top:12px; }
+button { background:#06c755; color:#fff; border:none; border-radius:6px; }
+</style>
 </head>
 <body>
 
 <h3 id="q">載入中…</h3>
-<input id="a" placeholder="">
+<input id="a">
 <button id="btn">下一步</button>
 
 <script>
-/* 🔴 一定要換成你最新的 */
 const LIFF_ID = '2008741675-rwpbbLaf';
-
-/* 🔴 一定要是「最新部署」的 GAS /exec */
-const API_URL = 'https://script.google.com/macros/s/AKfycbxZwyeJIFUIT0GpuZfTf12fuTFyyxmGIwd4R_izqyuLTfPBTGp77ZsazV5GetYlWps/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbxOiN6mR471Fj3G4RYZbwnYvCB4k2NQJJC7u1Q6PeMGoXNtnS5S5OtjAJpR087AynHO/exec';
 
 const steps = [
   { key:'name', text:'請輸入姓名' },
-  { key:'phone', text:'請輸入手機號碼' },
+  { key:'phone', text:'請輸入手機' },
   { key:'birthday', text:'請輸入生日' },
   { key:'requestAmount', text:'請輸入申請額度' },
   { key:'purpose', text:'請輸入資金用途' }
@@ -61,17 +48,13 @@ async function init() {
 function show() {
   document.getElementById('q').innerText = steps[i].text;
   document.getElementById('a').value = '';
-  document.getElementById('a').placeholder = steps[i].text;
 }
 
 document.getElementById('btn').onclick = async () => {
-  const input = document.getElementById('a');
-  if (!input.value) {
-    alert('請填寫後再繼續');
-    return;
-  }
+  const v = document.getElementById('a').value;
+  if (!v) return alert('請填寫');
 
-  data[steps[i].key] = input.value;
+  data[steps[i].key] = v;
   i++;
 
   if (i < steps.length) {
@@ -82,12 +65,19 @@ document.getElementById('btn').onclick = async () => {
   document.getElementById('q').innerText = '送出中…';
   document.getElementById('btn').disabled = true;
 
-  // ✅ 關鍵：no-cors，不要等回傳
-  fetch(API_URL, {
+  const res = await fetch(API_URL, {
     method: 'POST',
-    mode: 'no-cors',
+    headers: { 'Content-Type':'application/json' },
     body: JSON.stringify(data)
   });
+
+  const r = await res.json();
+
+  if (!r.success) {
+    alert('送出失敗，請稍後再試');
+    document.getElementById('btn').disabled = false;
+    return;
+  }
 
   alert('申請完成');
   liff.closeWindow();
@@ -95,6 +85,5 @@ document.getElementById('btn').onclick = async () => {
 
 init();
 </script>
-
 </body>
 </html>
