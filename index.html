@@ -1,82 +1,35 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="utf-8" />
+  <meta charset="utf-8">
   <title>貸款申請</title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      padding: 20px;
-      line-height: 1.6;
-    }
-    input, button {
-      width: 100%;
-      padding: 12px;
-      font-size: 18px;
-      margin-top: 12px;
-      box-sizing: border-box;
-    }
-    button {
-      background-color: #06c755;
-      color: #fff;
-      border: none;
-      border-radius: 6px;
-    }
+    body { font-family: Arial; padding: 20px; }
+    input, button { width: 100%; font-size: 18px; padding: 10px; margin-top: 10px; }
+    button { background: #06c755; color: #fff; border: none; border-radius: 5px; }
   </style>
 </head>
-
 <body>
 
 <h3 id="q">載入中…</h3>
-<input id="a" placeholder="請輸入">
-<button id="btn">下一步</button>
+<input id="a" placeholder="">
+<button id="btn" onclick="next()">下一步</button>
 
 <script>
-/* ========= 必填設定 ========= */
 const LIFF_ID = '2008741675-rwpbbLaf';
-const API_URL = 'https://script.google.com/macros/s/AKfycbwTq3TVjPJWW-8j61vAit8oYEb83AJprPm8A3GOcjVcQFa5kYFiugRo_qsfypLsD3De/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbxZwyeJIFUIT0GpuZfTf12fuTFyyxmGIwd4R_izqyuLTfPBTGp77ZsazV5GetYlWps/exec';
 
-/* ========= 問題流程 ========= */
 const steps = [
   { key: 'name', text: '請輸入姓名' },
   { key: 'phone', text: '請輸入手機號碼' },
-  { key: 'birthday', text: '請輸入生日（YYYY/MM/DD）' },
-  { key: 'idNumber', text: '請輸入身分證字號' },
-  { key: 'address', text: '請輸入居住地' },
-  { key: 'job', text: '請輸入職業' },
-  { key: 'companyName', text: '請輸入公司名稱' },
-  { key: 'jobYears', text: '請輸入在職年資' },
-  { key: 'monthlyIncome', text: '請輸入月收入' },
-  { key: 'salaryInsurance', text: '是否有薪轉或勞保' },
-  { key: 'hasHouse', text: '是否有房屋或土地' },
-  { key: 'hasVehicle', text: '是否有汽車或機車' },
-  { key: 'creditCard', text: '信用卡狀況' },
-  { key: 'bankLoan', text: '銀行貸款' },
-  { key: 'financeLoan', text: '融資貸款' },
-  { key: 'privateLoan', text: '民間借款' },
-  { key: 'hasNegotiation', text: '是否有協商或法扣' },
-  { key: 'isWarning', text: '是否為警示戶' },
-  { key: 'hasPaymentOrder', text: '是否有支付命令' },
-  { key: 'hasUnpaidFine', text: '是否有未繳罰單' },
-  { key: 'hasBadDebt', text: '是否有呆帳' },
-  { key: 'hasLatePayment', text: '是否有遲繳' },
-  { key: 'lateHowLong', text: '遲繳多久' },
-  { key: 'recentApply', text: '近期是否送貸' },
-  { key: 'requestAmount', text: '申請額度' },
-  { key: 'purpose', text: '資金用途' }
+  { key: 'requestAmount', text: '請輸入申請額度' }
 ];
 
 let i = 0;
 let data = {};
 
-/* ========= 初始化 ========= */
 async function init() {
-  i = 0;
-  data = {};
-  document.getElementById('btn').disabled = false;
-
   document.getElementById('q').innerText = 'LIFF 初始化中…';
 
   await liff.init({ liffId: LIFF_ID });
@@ -92,52 +45,41 @@ async function init() {
   show();
 }
 
-/* ========= 顯示題目 ========= */
 function show() {
   document.getElementById('q').innerText = steps[i].text;
   document.getElementById('a').value = '';
   document.getElementById('a').placeholder = steps[i].text;
 }
 
-/* ========= 下一步 ========= */
-async function nextStep() {
-  const input = document.getElementById('a');
-  const btn = document.getElementById('btn');
-
-  if (!input.value) {
-    alert('請先填寫');
-    return;
-  }
-
-  data[steps[i].key] = input.value;
+async function next() {
+  data[steps[i].key] = document.getElementById('a').value;
   i++;
 
   if (i < steps.length) {
     show();
-    return;
-  }
+  } else {
+    document.getElementById('q').innerText = '送出中…';
+    document.getElementById('btn').disabled = true;
 
-  // 送出
-  btn.disabled = true;
-  document.getElementById('q').innerText = '送出中…';
-
-  try {
-    await fetch(API_URL, {
+    const res = await fetch(API_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data)
     });
 
+    const r = await res.json();
+
+    if (!r.success) {
+      alert('送出失敗，請稍後再試');
+      document.getElementById('btn').disabled = false;
+      return;
+    }
+
     alert('申請完成');
     liff.closeWindow();
-
-  } catch (err) {
-    alert('送出失敗，請稍後再試');
-    btn.disabled = false;
   }
 }
 
-document.getElementById('btn').addEventListener('click', nextStep);
 init();
 </script>
 
