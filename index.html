@@ -17,16 +17,15 @@ button {
 <body>
 
 <h3 id="q">載入中…</h3>
-<input id="a">
+<input id="a" placeholder="">
 <button id="btn">下一步</button>
 
 <script>
-const LIFF_ID = '2008741675-rwpbbLaf';
-const API_URL = 'https://script.google.com/macros/s/AKfycbwescUdEwyPiVwEuJ_AY5HWuxmKaWDjYl3SKr11_cBDNVIm5jhe37LLhF_hHDPI-zIq/exec';
+const LIFF_ID = '2008741675-rwpbbLaf'; // 你目前最新的 LIFF ID
 
 const steps = [
   { key:'name', text:'請輸入姓名' },
-  { key:'phone', text:'請輸入手機' },
+  { key:'phone', text:'請輸入手機號碼' },
   { key:'birthday', text:'請輸入生日' },
   { key:'requestAmount', text:'請輸入申請額度' },
   { key:'purpose', text:'請輸入資金用途' }
@@ -37,46 +36,59 @@ let data = {};
 
 async function init() {
   await liff.init({ liffId: LIFF_ID });
+
   if (!liff.isLoggedIn()) {
-    liff.login(); return;
+    liff.login();
+    return;
   }
+
   const p = await liff.getProfile();
   data.userId = p.userId;
+
   show();
 }
 
 function show() {
   document.getElementById('q').innerText = steps[i].text;
   document.getElementById('a').value = '';
+  document.getElementById('a').placeholder = steps[i].text;
 }
 
 document.getElementById('btn').onclick = async () => {
-  const val = document.getElementById('a').value;
-  if (!val) return alert('請填寫');
-  data[steps[i].key] = val;
+  const input = document.getElementById('a');
+  if (!input.value) return alert('請填寫');
+
+  data[steps[i].key] = input.value;
   i++;
 
-  if (i < steps.length) return show();
+  if (i < steps.length) {
+    show();
+    return;
+  }
 
   document.getElementById('q').innerText = '送出中…';
   document.getElementById('btn').disabled = true;
 
-  try {
-  const res = await fetch(API_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data)
-  });
+  // ⭐ 只做一件事：送 LINE 訊息
+  const msg =
+`【新貸款申請】
+姓名：${data.name}
+手機：${data.phone}
+生日：${data.birthday}
+申請額度：${data.requestAmount}
+用途：${data.purpose}
+userId：${data.userId}`;
 
-  const text = await res.text();
-  console.log('GAS 回傳：', text);
+  await liff.sendMessages([{
+    type: 'text',
+    text: msg
+  }]);
 
-  alert('申請完成');
+  alert('申請已送出');
   liff.closeWindow();
+};
 
-} catch (e) {
-  console.error(e);
-  alert('送出失敗，請稍後再試');
-  document.getElementById('btn').disabled = false;
-}
-
+init();
+</script>
+</body>
+</html>
