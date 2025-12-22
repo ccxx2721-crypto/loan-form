@@ -61,24 +61,22 @@ document.getElementById('btn').onclick = async () => {
   document.getElementById('q').innerText = '送出中…';
   document.getElementById('btn').disabled = true;
 
+  try {
   const res = await fetch(API_URL, {
-    method:'POST',
-    headers:{ 'Content-Type':'application/json' },
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data)
   });
 
-  const r = await res.json();
-  if (!r.success) {
-    alert('送出失敗');
-    document.getElementById('btn').disabled = false;
-    return;
-  }
+  const text = await res.text();
+  console.log('GAS 回傳：', text);
 
   alert('申請完成');
   liff.closeWindow();
-};
 
-init();
-</script>
-</body>
-</html>
+} catch (e) {
+  console.error(e);
+  alert('送出失敗，請稍後再試');
+  document.getElementById('btn').disabled = false;
+}
+
