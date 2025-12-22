@@ -2,42 +2,62 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>LIFF 測試</title>
+  <title>貸款申請</title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 </head>
 <body>
 
-<h2 id="status">LIFF 載入中…</h2>
+<h3 id="q">載入中…</h3>
+<input id="a">
+<button id="btn">下一步</button>
 
 <script>
-const LIFF_ID = '2008741675-rwpbbLaf'; // 你最新那個
+const LIFF_ID = '2008741675-rwpbbLaf';
+const API_URL = 'https://script.google.com/macros/s/【你的GAS部署ID】/exec';
 
-async function main() {
-  try {
-    document.getElementById('status').innerText = '開始 init LIFF';
+const steps = [
+  {k:'name', t:'姓名'},
+  {k:'phone', t:'手機'},
+  {k:'amount', t:'申請金額'}
+];
 
-    await liff.init({ liffId: LIFF_ID });
+let i=0, data={};
 
-    document.getElementById('status').innerText = 'LIFF init 成功';
-
-    if (!liff.isLoggedIn()) {
-      document.getElementById('status').innerText = '尚未登入，導向登入';
-      liff.login();
-      return;
-    }
-
-    const profile = await liff.getProfile();
-    document.getElementById('status').innerText =
-      '登入成功：' + profile.displayName;
-
-  } catch (err) {
-    document.getElementById('status').innerText =
-      '❌ 發生錯誤：' + err.message;
-  }
+async function init(){
+  await liff.init({ liffId: LIFF_ID });
+  if(!liff.isLoggedIn()) return liff.login();
+  const p = await liff.getProfile();
+  data.userId = p.userId;
+  show();
 }
 
-main();
-</script>
+function show(){
+  q.innerText = steps[i].t;
+  a.value='';
+}
 
+btn.onclick = async ()=>{
+  data[steps[i].k] = a.value;
+  i++;
+  if(i<steps.length) return show();
+
+  q.innerText = '送出中…';
+
+  const r = await fetch(API_URL,{
+    method:'POST',
+    body: JSON.stringify(data)
+  });
+  const j = await r.json();
+
+  if(j.ok){
+    alert('已送出');
+    liff.closeWindow();
+  }else{
+    alert('送出失敗');
+  }
+};
+
+init();
+</script>
 </body>
 </html>
