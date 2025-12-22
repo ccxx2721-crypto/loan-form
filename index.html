@@ -1,9 +1,18 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="utf-8">
-  <title>貸款申請</title>
-  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<meta charset="utf-8">
+<title>貸款申請</title>
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<style>
+body { font-family: Arial; padding:20px; }
+input, button {
+  width:100%; padding:12px; font-size:18px; margin-top:12px;
+}
+button {
+  background:#06c755; color:#fff; border:none; border-radius:6px;
+}
+</style>
 </head>
 <body>
 
@@ -12,49 +21,61 @@
 <button id="btn">下一步</button>
 
 <script>
-const LIFF_ID = '2008741675-rwpbbLaf';
-const API_URL = 'https://script.google.com/macros/s/【你的GAS部署ID】/exec';
+const LIFF_ID = '你最新的 LIFF ID';
+const API_URL = '你 GAS 的 /exec 網址';
 
 const steps = [
-  {k:'name', t:'姓名'},
-  {k:'phone', t:'手機'},
-  {k:'amount', t:'申請金額'}
+  { key:'name', text:'請輸入姓名' },
+  { key:'phone', text:'請輸入手機' },
+  { key:'birthday', text:'請輸入生日' },
+  { key:'requestAmount', text:'請輸入申請額度' },
+  { key:'purpose', text:'請輸入資金用途' }
 ];
 
-let i=0, data={};
+let i = 0;
+let data = {};
 
-async function init(){
+async function init() {
   await liff.init({ liffId: LIFF_ID });
-  if(!liff.isLoggedIn()) return liff.login();
+  if (!liff.isLoggedIn()) {
+    liff.login(); return;
+  }
   const p = await liff.getProfile();
   data.userId = p.userId;
   show();
 }
 
-function show(){
-  q.innerText = steps[i].t;
-  a.value='';
+function show() {
+  document.getElementById('q').innerText = steps[i].text;
+  document.getElementById('a').value = '';
 }
 
-btn.onclick = async ()=>{
-  data[steps[i].k] = a.value;
+document.getElementById('btn').onclick = async () => {
+  const val = document.getElementById('a').value;
+  if (!val) return alert('請填寫');
+  data[steps[i].key] = val;
   i++;
-  if(i<steps.length) return show();
 
-  q.innerText = '送出中…';
+  if (i < steps.length) return show();
 
-  const r = await fetch(API_URL,{
+  document.getElementById('q').innerText = '送出中…';
+  document.getElementById('btn').disabled = true;
+
+  const res = await fetch(API_URL, {
     method:'POST',
+    headers:{ 'Content-Type':'application/json' },
     body: JSON.stringify(data)
   });
-  const j = await r.json();
 
-  if(j.ok){
-    alert('已送出');
-    liff.closeWindow();
-  }else{
+  const r = await res.json();
+  if (!r.success) {
     alert('送出失敗');
+    document.getElementById('btn').disabled = false;
+    return;
   }
+
+  alert('申請完成');
+  liff.closeWindow();
 };
 
 init();
