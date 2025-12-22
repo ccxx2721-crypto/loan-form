@@ -1,73 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>LIFF 測試</title>
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+</head>
+<body>
+
+<h2 id="status">LIFF 載入中…</h2>
+
 <script>
-const LIFF_ID = '2008741675-rwpbbLaf';
-const API_URL = 'https://script.google.com/macros/s/AKfycbz9MxvyH9bHj5_glCdJaXPiHN4jcrPJU1izQvHzgE1UJTFuOGSaCBjEpTmEICH7lwS4/exec';
+const LIFF_ID = '2008741675-rwpbbLaf'; // 你最新那個
 
-const steps = [
-  { key:'name', text:'請輸入姓名' },
-  { key:'phone', text:'請輸入手機號碼' },
-  { key:'birthday', text:'請輸入生日' },
-  { key:'requestAmount', text:'請輸入申請額度' },
-  { key:'purpose', text:'請輸入資金用途' }
-];
+async function main() {
+  try {
+    document.getElementById('status').innerText = '開始 init LIFF';
 
-let i = 0;
-let data = {};
+    await liff.init({ liffId: LIFF_ID });
 
-async function init() {
-  await liff.init({ liffId: LIFF_ID });
-  if (!liff.isLoggedIn()) return liff.login();
+    document.getElementById('status').innerText = 'LIFF init 成功';
 
-  const p = await liff.getProfile();
-  data.userId = p.userId;
-  show();
-}
+    if (!liff.isLoggedIn()) {
+      document.getElementById('status').innerText = '尚未登入，導向登入';
+      liff.login();
+      return;
+    }
 
-function show() {
-  q.innerText = steps[i].text;
-  a.value = '';
-  a.placeholder = steps[i].text;
-}
+    const profile = await liff.getProfile();
+    document.getElementById('status').innerText =
+      '登入成功：' + profile.displayName;
 
-btn.onclick = async () => {
-  if (!a.value) return alert('請輸入');
-
-  data[steps[i].key] = a.value;
-  i++;
-
-  if (i < steps.length) return show();
-
-  btn.disabled = true;
-  q.innerText = '送出中…';
-
-  const res = await fetch(API_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data)
-  });
-
-  const result = await res.json();
-
-  if (!result.success) {
-    alert('送出失敗');
-    btn.disabled = false;
-    q.innerText = '請重新送出';
-    return;
+  } catch (err) {
+    document.getElementById('status').innerText =
+      '❌ 發生錯誤：' + err.message;
   }
+}
 
-  await liff.sendMessages([{
-    type: 'text',
-    text:
-`📩 新貸款申請
-姓名：${data.name}
-手機：${data.phone}
-生日：${data.birthday}
-金額：${data.requestAmount}
-用途：${data.purpose}`
-  }]);
-
-  alert('申請完成');
-  liff.closeWindow();
-};
-
-init();
+main();
 </script>
+
+</body>
+</html>
