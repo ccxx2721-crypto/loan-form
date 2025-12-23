@@ -1,96 +1,96 @@
 <script>
-const LIFF_ID = '2008741675-rwpbbLaf'; // 你目前最新的 LIFF ID
+window.addEventListener('DOMContentLoaded', () => {
+  const LIFF_ID = '2008741675-rwpbbLaf'; // 你目前最新的 LIFF ID
 
-const steps = [
-  { key:'name', text:'請輸入姓名' },
-  { key:'phone', text:'請輸入手機號碼' },
-  { key:'birthday', text:'請輸入生日' },
-  { key:'requestAmount', text:'請輸入申請額度' },
-  { key:'purpose', text:'請輸入資金用途' }
-];
+  const steps = [
+    { key:'name', text:'請輸入姓名' },
+    { key:'phone', text:'請輸入手機號碼' },
+    { key:'birthday', text:'請輸入生日' },
+    { key:'requestAmount', text:'請輸入申請額度' },
+    { key:'purpose', text:'請輸入資金用途' }
+  ];
 
-let i = 0;
-let data = {};
-const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbx9yy8lhrlXx7An5MNr7l-3S4r1LTfWJ-Ijc_h0G1ueEGIITugx5MtQfeO6zmM1FBm_/exec';
+  let i = 0;
+  let data = {};
+  const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbx9yy8lhrlXx7An5MNr7l-3S4r1LTfWJ-Ijc_h0G1ueEGIITugx5MtQfeO6zmM1FBm_/exec';
 
-async function init() {
-  await liff.init({ liffId: LIFF_ID });
+  async function init() {
+    await liff.init({ liffId: LIFF_ID });
 
-  if (!liff.isLoggedIn()) {
-    liff.login();
-    return;
-  }
+    if (!liff.isLoggedIn()) {
+      liff.login();
+      return;
+    }
 
-  const p = await liff.getProfile();
-  data.userId = p.userId;
+    const p = await liff.getProfile();
+    data.userId = p.userId;
 
-  show();
-}
-
-function show() {
-  document.getElementById('q').innerText = steps[i].text;
-  document.getElementById('a').value = '';
-  document.getElementById('a').placeholder = steps[i].text;
-}
-
-document.getElementById('btn').onclick = async () => {
-  const input = document.getElementById('a');
-  if (!input.value) {
-    alert('請填寫');
-    return;
-  }
-
-  data[steps[i].key] = input.value;
-  i++;
-
-  if (i < steps.length) {
     show();
-    return;
   }
 
-  document.getElementById('q').innerText = '送出中…';
-  document.getElementById('btn').disabled = true;
+  function show() {
+    document.getElementById('q').innerText = steps[i].text;
+    document.getElementById('a').value = '';
+    document.getElementById('a').placeholder = steps[i].text;
+  }
 
-  try {
-    // 1) 先把資料送到 GAS，寫入 Google 試算表
-    const payload = {
-      text: `
+  document.getElementById('btn').onclick = async () => {
+    const input = document.getElementById('a');
+    if (!input.value) {
+      alert('請填寫');
+      return;
+    }
+
+    data[steps[i].key] = input.value;
+    i++;
+
+    if (i < steps.length) {
+      show();
+      return;
+    }
+
+    document.getElementById('q').innerText = '送出中…';
+    document.getElementById('btn').disabled = true;
+
+    try {
+      const payload = {
+        text: `
 姓名：${data.name}
 手機：${data.phone}
 生日：${data.birthday}
 申請額度：${data.requestAmount}
 用途：${data.purpose}
-      `.trim(),
-      userId: data.userId
-    };
+        `.trim(),
+        userId: data.userId
+      };
 
-    const res = await fetch(WEBAPP_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-    const result = await res.json();
-    if (result.result !== 'ok') {
-      throw new Error(result.message || 'GAS 回傳錯誤');
-    }
+      const res = await fetch(WEBAPP_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const result = await res.json();
+      if (result.result !== 'ok') {
+        throw new Error(result.message || 'GAS 回傳錯誤');
+      }
 
-    // 2) 再發一則訊息到 LINE 聊天視窗（讓你自己也看到內容）
-    const msg = `#貸款申請
+      const msg = `#貸款申請
 姓名：${data.name}
 手機：${data.phone}
 生日：${data.birthday}
 申請額度：${data.requestAmount}
 用途：${data.purpose}`;
 
-    await liff.sendMessages([{ type: 'text', text: msg }]);
-    liff.closeWindow();
-  } catch (e) {
-    console.error(e);
-    alert('送出失敗，請稍後再試一次');
-    document.getElementById('btn').disabled = false;
-    document.getElementById('q').innerText = '送出失敗，請重試';
-  }
-};
+      await liff.sendMessages([{ type: 'text', text: msg }]);
+      liff.closeWindow();
+    } catch (e) {
+      console.error(e);
+      alert('送出失敗，請稍後再試一次');
+      document.getElementById('btn').disabled = false;
+      document.getElementById('q').innerText = '送出失敗，請重試';
+    }
+  };
 
-init();
+  init();
+});
 </script>
