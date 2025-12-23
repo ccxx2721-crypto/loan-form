@@ -70,23 +70,23 @@ document.getElementById('btn').onclick = async () => {
   document.getElementById('btn').disabled = true;
 
   // ⭐ 只做一件事：送 LINE 訊息
-  const msg =
-`【新貸款申請】
+const msg =
+`#貸款申請
 姓名：${data.name}
 手機：${data.phone}
 生日：${data.birthday}
 申請額度：${data.requestAmount}
-用途：${data.purpose}
-userId：${data.userId}`;
+用途：${data.purpose}`;
 
-  await liff.sendMessages([{
+await liff.sendMessages([
+  {
     type: 'text',
     text: msg
-  }]);
+  }
+]);
 
-  alert('申請已送出');
-  liff.closeWindow();
-};
+liff.closeWindow();
+
 
 init();
 </script>
