@@ -3,37 +3,125 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>LIFF 測試</title>
+<title>貸款申請</title>
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<style>
+  body { font-family: Arial; padding:20px; }
+  input, button {
+    width:100%; padding:12px; font-size:18px; margin-top:12px;
+  }
+  button {
+    background:#06c755; color:#fff; border:none; border-radius:8px;
+  }
+  button:disabled { opacity:.6; }
+  .step { font-size:13px; color:#666; margin-top:6px; }
+</style>
 </head>
 <body>
 
-<h2 id="status">HTML 已載入</h2>
+<h3 id="q">初始化中…</h3>
+<div class="step" id="step"></div>
+
+<input id="a" placeholder="">
+<button id="btn">下一步</button>
 
 <script>
-const LIFF_ID = '2008741675-qAksMTVG'; // 你現在用的
+const LIFF_ID = '2008741675-rwpbbLaf'; // ✅ 你的 LIFF v2 ID
 
-(async () => {
+const steps = [
+  { key:'name',          text:'請輸入姓名' },
+  { key:'phone',         text:'請輸入手機號碼' },
+  { key:'birthday',      text:'請輸入生日（例：1990/01/01）' },
+  { key:'requestAmount', text:'此次想貸額度' },
+  { key:'purpose',       text:'資金用途' }
+];
+
+let i = 0;
+const data = {};
+
+const q = document.getElementById('q');
+const stepEl = document.getElementById('step');
+const input = document.getElementById('a');
+const btn = document.getElementById('btn');
+
+function render() {
+  q.innerText = steps[i].text;
+  stepEl.innerText = `第 ${i + 1} / ${steps.length} 題`;
+  input.value = '';
+  input.placeholder = steps[i].text;
+  input.disabled = false;
+  btn.disabled = false;
+  input.focus();
+}
+
+async function init() {
   try {
-    document.getElementById('status').innerText = '開始 liff.init()';
+    q.innerText = 'LIFF 初始化中…';
     await liff.init({ liffId: LIFF_ID });
-    document.getElementById('status').innerText = 'liff.init() 成功';
 
     if (!liff.isLoggedIn()) {
-      document.getElementById('status').innerText = '未登入，呼叫 login()';
       liff.login();
       return;
     }
 
     const profile = await liff.getProfile();
-    document.getElementById('status').innerText =
-      '完成，userId：' + profile.userId;
+    data.userId = profile.userId;
+
+    i = 0;
+    render();
 
   } catch (e) {
-    document.getElementById('status').innerText =
-      '錯誤：' + (e.message || e);
+    q.innerText = '初始化失敗';
+    stepEl.innerText = e.message || String(e);
+    input.disabled = true;
+    btn.disabled = true;
   }
-})();
+}
+
+btn.onclick = async () => {
+  const val = input.value.trim();
+  if (!val) {
+    alert('請填寫後再繼續');
+    return;
+  }
+
+  data[steps[i].key] = val;
+  i++;
+
+  if (i < steps.length) {
+    render();
+    return;
+  }
+
+  // 最後送出
+  const message =
+`【貸款申請】
+姓名：${data.name}
+手機：${data.phone}
+生日：${data.birthday}
+申請額度：${data.requestAmount}
+用途：${data.purpose}`;
+
+  q.innerText = '送出中…';
+  stepEl.innerText = '';
+  input.disabled = true;
+  btn.disabled = true;
+
+  try {
+    await liff.sendMessages([{ type:'text', text: message }]);
+    q.innerText = '已送出 ✅';
+    stepEl.innerText = '感謝您的填寫';
+    setTimeout(() => liff.closeWindow(), 600);
+  } catch (e) {
+    q.innerText = '送出失敗';
+    btn.disabled = false;
+    input.disabled = false;
+    alert('送出失敗，請稍後再試');
+    render();
+  }
+};
+
+init();
 </script>
 
 </body>
