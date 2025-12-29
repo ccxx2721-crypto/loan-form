@@ -1,42 +1,60 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="utf-8">
-  <title>貸款申請</title>
-  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-  <style>
-    body { font-family: Arial; padding:20px; }
-    input, button {
-      width:100%; padding:12px; font-size:18px; margin-top:12px;
-    }
-    button {
-      background:#06c755; color:#fff; border:none; border-radius:6px;
-    }
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>貸款申請</title>
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<style>
+  body { font-family: Arial; padding:20px; }
+  input, button {
+    width:100%; padding:12px; font-size:18px; margin-top:12px;
+  }
+  button {
+    background:#06c755; color:#fff; border:none; border-radius:8px;
+  }
+  button:disabled { opacity: .6; }
+  .step { color:#666; font-size:13px; margin-top:6px; }
+</style>
 </head>
 <body>
 
 <h3 id="q">載入中…</h3>
-<input id="a" placeholder="">
-<button id="btn">下一步</button>
+<div class="step" id="step"></div>
+<input id="a" placeholder="" disabled>
+<button id="btn" disabled>下一步</button>
 
 <script>
-window.addEventListener('DOMContentLoaded', () => {
-  const LIFF_ID = '2008741675-rwpbbLaf'; // 你的 LIFF ID
+const LIFF_ID = '2008741675-rwpbbLaf'; // ✅ 你的火速貸 LIFF v2 ID
 
-  const steps = [
-    { key:'name', text:'請輸入姓名' },
-    { key:'phone', text:'請輸入手機號碼' },
-    { key:'birthday', text:'請輸入生日' },
-    { key:'requestAmount', text:'請輸入申請額度' },
-    { key:'purpose', text:'請輸入資金用途' }
-  ];
+const steps = [
+  { key:'name',          text:'請輸入姓名' },
+  { key:'phone',         text:'請輸入手機號碼' },
+  { key:'birthday',      text:'請輸入生日（例：1990/01/01）' },
+  { key:'requestAmount', text:'此次想貸額度' },
+  { key:'purpose',       text:'資金用途' }
+];
 
-  let i = 0;
-  let data = {};
-  const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbx9yy8lhrlXx7An5MNr7l-3S4r1LTfWJ-Ijc_h0G1ueEGIITugx5MtQfeO6zmM1FBm_/exec';
+let i = 0;
+const data = {};
 
-  async function init() {
+const q = document.getElementById('q');
+const stepEl = document.getElementById('step');
+const input = document.getElementById('a');
+const btn = document.getElementById('btn');
+
+function showStep() {
+  q.innerText = steps[i].text;
+  stepEl.innerText = `第 ${i + 1} / ${steps.length} 題`;
+  input.value = '';
+  input.placeholder = steps[i].text;
+  input.focus();
+}
+
+async function init() {
+  try {
+    q.innerText = 'LIFF 初始化中…';
+
     await liff.init({ liffId: LIFF_ID });
 
     if (!liff.isLoggedIn()) {
@@ -44,18 +62,65 @@ window.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    const p = await liff.getProfile();
-    data.userId = p.userId;
+    const profile = await liff.getProfile();
+    data.userId = profile.userId;
 
-    show();
+    input.disabled = false;
+    btn.disabled = false;
+
+    showStep();
+
+  } catch (err) {
+    q.innerText = 'LIFF 初始化失敗';
+    stepEl.innerText = err.message || String(err);
+  }
+}
+
+btn.onclick = async () => {
+  const val = input.value.trim();
+  if (!val) {
+    alert('請填寫後再繼續');
+    return;
   }
 
-  function show() {
-    document.getElementById('q').innerText = steps[i].text;
-    const input = document.getElementById('a');
-    input.value = '';
-    input.placeholder = steps[i].text;
+  data[steps[i].key] = val;
+  i++;
+
+  if (i < steps.length) {
+    showStep();
+    return;
   }
 
-  const btn = document.getElementById('btn');
-  console.log('
+  // ⭐ 固定格式，給 Webhook 解析
+  const message =
+`【貸款申請】
+姓名：${data.name}
+手機：${data.phone}
+生日：${data.birthday}
+申請額度：${data.requestAmount}
+用途：${data.purpose}`;
+
+  q.innerText = '送出中…';
+  btn.disabled = true;
+
+  try {
+    await liff.sendMessages([
+      { type: 'text', text: message }
+    ]);
+
+    q.innerText = '已送出 ✅';
+    stepEl.innerText = '感謝您的填寫';
+    setTimeout(() => liff.closeWindow(), 600);
+
+  } catch (err) {
+    btn.disabled = false;
+    alert('送出失敗，請稍後再試');
+    showStep();
+  }
+};
+
+init();
+</script>
+
+</body>
+</html>
