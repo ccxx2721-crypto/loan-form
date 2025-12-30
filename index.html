@@ -122,7 +122,7 @@ document.getElementById('btn').onclick = async () => {
 資金用途：${data.purpose}`;
 
   // 🔥 關鍵：真的送進 LINE 官方帳聊天室
- // 🔒 傳送「JSON 格式」給 Webhook（穩定寫 Sheet）
+// 🔒 傳送「JSON 格式」給 Webhook（穩定寫 Sheet）
 await liff.sendMessages([
   {
     type: 'text',
